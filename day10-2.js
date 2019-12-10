@@ -51,22 +51,42 @@ input.split('\n').forEach((l, lineIndex) => {
   })
 })
 
-let max = 0
-let best
-const asteroids = new Map()
-for (let point of map) {
-  const set = new Set()
-  for (let other of map) {
-    if (point[0] === other[0] && point[1] == other[1]) continue
-    const angle = (Math.atan2(other[1] - point[1], other[0] - point[0]) * 180) / Math.PI + 180
-    set.add(angle)
+const center = [30, 34]
+const anglesMap = new Map()
+const angles = []
+
+for (let asteroid of map) {
+  if (center[0] === asteroid[0] && center[1] == asteroid[1]) continue
+  const angle =
+    ((Math.atan2(asteroid[1] - center[1], asteroid[0] - center[0]) * 180) / Math.PI + 450) % 360 // +450 to force top to be 0°
+  const distance = Math.hypot(asteroid[0] - center[0], asteroid[1] - center[1])
+
+  let item = anglesMap.get(angle)
+  if (!anglesMap.has(angle)) {
+    item = {
+      angle,
+      asteroids: [],
+    }
+    anglesMap.set(angle, item)
+    angles.push(item)
   }
-  if (set.size > max) {
-    max = set.size
-    best = point
-  }
-  console.log(`${point[0]}-${point[1]}`, set.size)
-  asteroids.set(`${point[0]}-${point[1]}`, set)
+  item.asteroids.push({ point: asteroid, distance })
 }
 
-console.log(best, max)
+for (let item of angles.values()) {
+  item.asteroids.sort((a, b) => a.distance - b.distance)
+}
+angles.sort((a, b) => a.angle - b.angle)
+
+let count = 0
+let index = 0
+while (count < map.length - 1) {
+  const angleIndex = index % angles.length
+  const angle = angles[angleIndex]
+  if (angle.asteroids.length > 0) {
+    const asteroid = angle.asteroids.shift()
+    count += 1
+    console.log(count, angle.angle, asteroid)
+  }
+  index += 1
+}
